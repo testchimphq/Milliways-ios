@@ -5,6 +5,9 @@ on:
     branches: ["*"]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   id-token: write
   contents: read
@@ -26,10 +29,10 @@ jobs:
           path: build/Milliways-unsigned.ipa
 
   test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: build
     env:
-      MOBILECLI_TOKEN: ${{ secrets.MOBILEFLEET_API_KEY }}
+      MOBILE_USE_API_KEY: ${{ secrets.MOBILE_USE_API_KEY }}
     steps:
       - uses: actions/checkout@v5
 
@@ -39,17 +42,11 @@ jobs:
           name: ipa-build
           path: build
 
-      - name: Allocate real iOS device
-        run: |
-          npx -y @mobilenext/mobilecli fleet allocate --platform "ios" --version "18.6.2" --verbose --wait --timeout 600
-          npx -y @mobilenext/mobilecli devices -v
-          npx -y @mobilenext/mobilecli apps install ./build/Milliways-unsigned.ipa
-
       - name: Run tests using mobilewright
+        working-directory: tests
         run: |
           # some of the tests are expected to fail, so we're adding || true
-          cd tests
-          npm install --ignore-scripts
+          npm ci --ignore-scripts
           npm run test || true
 
       - name: Upload test report
@@ -59,26 +56,17 @@ jobs:
           name: mobilewright-report
           path: tests/mobilewright-report
 
-  publish:
-    runs-on: ubuntu-latest
-    needs: test
-    if: always()
-    steps:
-      - uses: actions/checkout@v5
-
-      - name: Download test report
-        uses: actions/download-artifact@v5
-        with:
-          name: mobilewright-report
-          path: tests/mobilewright-report
-
       - uses: aws-actions/configure-aws-credentials@v5
+        if: always()
         with:
           role-to-assume: ${{ secrets.AWS_SAMPLES_UPLOAD_ROLE_ARN }}
           aws-region: us-west-2
 
       - name: Upload samples to S3
+        if: always()
         run: |
           GITSHA=$( git rev-parse HEAD )
           aws s3 cp --quiet --recursive --acl public-read tests/mobilewright-report s3://mobilewright-samples/milliways/runs/$GITSHA
           echo "→ Report uploaded to https://mobilewright-samples.s3.amazonaws.com/milliways/runs/$GITSHA/index.html"
+          echo "### 📊 Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "[View Mobilewright Report](https://mobilewright-samples.s3.amazonaws.com/milliways/runs/$GITSHA/index.html)" >> $GITHUB_STEP_SUMMARY
