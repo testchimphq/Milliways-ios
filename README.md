@@ -14,7 +14,7 @@ This project serves as a testing environment for:
 
 The app features a food ordering flow with a space-themed menu, shopping cart, delivery tracking, and user account — providing various UI elements and scenarios for testing mobile automation capabilities.
 
-You can [view a sample Mobilewright test report](https://mobilewright-samples.s3.amazonaws.com/milliways/runs/c6d69830dc9cb4e9e1e0d4ce06013d63c1e6c2a5/index.html) of the last build.
+You can [view Mobilewright test report](https://mobilewright-samples.s3.amazonaws.com/milliways/runs/c6d69830dc9cb4e9e1e0d4ce06013d63c1e6c2a5/index.html) of the last build.
 
 ## Known Issues
 
