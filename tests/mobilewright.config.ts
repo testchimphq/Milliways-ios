@@ -16,7 +16,7 @@ const config: MobilewrightConfig = {
   // bundle identifier of our app under test
   bundleId: 'com.mobilenext.Milliways',
 
-  // enable paralllelism on all tests
+  // enable paralllelism on all tests, not just their files
   fullyParallel: true,
 
   // how many workers (devices) at the same time?

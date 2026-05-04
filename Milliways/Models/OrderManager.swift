@@ -20,9 +20,16 @@ struct OrderItem: Identifiable {
 
 class OrderManager: ObservableObject {
     @Published var items: [OrderItem] = []
+    @Published var couponDiscount: Double = 0
+    @Published var appliedCouponCode: String? = nil
 
     var totalPrice: Double {
         items.reduce(0) { $0 + $1.totalPrice }
+    }
+
+    // Coupon discount is frozen when applied — does not update if cart changes
+    var finalTotal: Double {
+        totalPrice - couponDiscount
     }
 
     var totalQuantity: Int {
@@ -37,7 +44,17 @@ class OrderManager: ObservableObject {
         items.remove(at: index)
     }
 
+    @discardableResult
+    func applyCoupon(_ code: String) -> Bool {
+        guard code.uppercased() == "MARVIN" else { return false }
+        couponDiscount = 20.0
+        appliedCouponCode = "MARVIN"
+        return true
+    }
+
     func clearOrder() {
         items.removeAll()
+        couponDiscount = 0
+        appliedCouponCode = nil
     }
 }

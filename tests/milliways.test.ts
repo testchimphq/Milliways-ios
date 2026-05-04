@@ -238,6 +238,63 @@ test.describe('account', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Coupons
+// ---------------------------------------------------------------------------
+
+test.describe('coupons', () => {
+  test('MARVIN coupon applies a ₭20 discount', async ({ screen }) => {
+    await navigateToMenu(screen);
+    await addItemToCart(screen, 'Ameglian Major Cow');  // ₭35.00
+    await screen.getByText('View Order').tap();
+
+    await screen.getByLabel('Coupon code').fill('MARVIN');
+    await screen.getByText('Apply').tap();
+
+    await expect(screen.getByText('-₭20.00')).toBeVisible();
+    await expect(screen.getByText('₭15.00')).toBeVisible();  // 35 - 20
+  });
+
+  test('invalid coupon code shows an error', async ({ screen }) => {
+    await navigateToMenu(screen);
+    await addItemToCart(screen, 'Coffee');
+    await screen.getByText('View Order').tap();
+
+    await screen.getByLabel('Coupon code').fill('ZAPHOD');
+    await screen.getByText('Apply').tap();
+
+    await expect(screen.getByText('Invalid coupon code')).toBeVisible();
+  });
+
+  test('removing items after applying coupon causes negative total and crashes on checkout (should fail)', async ({ screen }) => {
+    await navigateToMenu(screen);
+
+    // Add items totalling more than the coupon value
+    await addItemToCart(screen, 'Ameglian Major Cow');  // ₭35.00
+    await expect(screen.getByText('MAIN DISHES')).toBeVisible();
+    await addItemToCart(screen, 'Coffee');               // ₭4.50 — total ₭39.50
+
+    await screen.getByText('View Order').tap();
+    await expect(screen.getByText('₭39.50')).toBeVisible();
+
+    // Apply coupon — total looks fine at ₭19.50
+    await screen.getByLabel('Coupon code').fill('MARVIN');
+    await screen.getByText('Apply').tap();
+    await expect(screen.getByText('₭19.50')).toBeVisible();
+
+    // Remove the expensive item — discount stays frozen at ₭20, total goes negative
+    await screen.getByText('Ameglian Major Cow').swipe({ direction: 'left' });
+    await screen.getByLabel('Delete').tap();
+
+    // Total is now -₭15.50 (₭4.50 - ₭20.00)
+    await expect(screen.getByText('₭-15.50')).toBeVisible();
+
+    // Placing the order crashes the app
+    await screen.getByLabel('Place Order').tap();
+    await expect(screen.getByText(/minutes for delivery/)).toBeVisible();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Navigation & state
 // ---------------------------------------------------------------------------
 

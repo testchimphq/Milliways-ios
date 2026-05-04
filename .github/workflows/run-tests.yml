@@ -2,7 +2,7 @@ name: Run Mobilewright
 
 on:
   push:
-    branches: ["*"]
+    branches: ["**"]
   workflow_dispatch:
 
 env:

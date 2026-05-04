@@ -12,6 +12,8 @@ struct OrderView: View {
     @Binding var popToRoot: Bool
     @Environment(\.dismiss) var dismiss
     @State private var showDelivery = false
+    @State private var couponCode = ""
+    @State private var couponError: String? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -78,18 +80,62 @@ struct OrderView: View {
                         }
                     }
 
+                    if orderManager.couponDiscount > 0 {
+                        HStack {
+                            Text("Coupon \(orderManager.appliedCouponCode ?? "")")
+                                .font(.subheadline)
+                                .foregroundColor(.green)
+                            Spacer()
+                            Text("-₭\(orderManager.couponDiscount, specifier: "%.2f")")
+                                .font(.subheadline)
+                                .foregroundColor(.green)
+                        }
+                        .listRowBackground(Color(.systemGroupedBackground))
+                    }
+
                     HStack {
                         Text("Total")
                             .font(.headline)
                         Spacer()
-                        Text("₭\(orderManager.totalPrice, specifier: "%.2f")")
+                        Text("₭\(orderManager.finalTotal, specifier: "%.2f")")
                             .font(.headline)
+                            .foregroundColor(orderManager.finalTotal < 0 ? .red : .primary)
                     }
                     .listRowBackground(Color(.systemGroupedBackground))
                 }
                 .listStyle(.plain)
 
+                if orderManager.appliedCouponCode == nil {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            TextField("Coupon code", text: $couponCode)
+                                .textFieldStyle(.roundedBorder)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.characters)
+                                .accessibilityLabel("Coupon code")
+                            Button("Apply") {
+                                if orderManager.applyCoupon(couponCode) {
+                                    couponCode = ""
+                                    couponError = nil
+                                } else {
+                                    couponError = "Invalid coupon code"
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        if let error = couponError {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGroupedBackground))
+                }
+
                 Button(action: {
+                    let cents = UInt(orderManager.finalTotal * 100)
+                    print("Processing payment of \(cents) cents")
                     showDelivery = true
                 }) {
                     Text("Place Order")
