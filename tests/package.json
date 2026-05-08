@@ -10,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@mobilewright/test": "^0.0.28",
+    "@mobilewright/test": "^0.0.31",
     "@testchimp/playwright": "^0.1.25",
-    "mobilewright": "^0.0.28"
+    "mobilewright": "^0.0.31"
   }
 }

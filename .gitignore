@@ -1,5 +1,41 @@
-build
+## Xcode / iOS build artifacts
+DerivedData/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+## User-specific settings
 xcuserdata/
-**/mobilewright-report
-**/test-results
-**/node_modules
+**/*.xcuserdatad/
+
+## Build output
+build/
+build-*/
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+*.app
+
+## Swift Package Manager
+.build/
+Packages/
+Package.resolved
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+## CocoaPods / Carthage (if used)
+Pods/
+Carthage/Build/
+
+## Node / Mobilewright test artifacts
+**/node_modules/
+**/mobilewright-report/
+**/test-results/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## macOS
+.DS_Store
+**/.DS_Store
