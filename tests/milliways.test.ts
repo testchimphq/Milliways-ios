@@ -61,6 +61,7 @@ async function openAccount(screen: Screen) {
 
 test.describe('ordering flow', () => {
   test('complete order: add items, review cart, place order, see delivery', async ({ screen }) => {
+    // @Scenario: #TS-101 Submit order with valid delivery details
     await navigateToMenu(screen);
 
     // Add a cow and a coffee
@@ -81,6 +82,8 @@ test.describe('ordering flow', () => {
 
     // Place the order
     await screen.getByLabel('Place Order').tap();
+
+    // @Scenario: #TS-102 View active order tracking timeline
     await expect(screen.getByText(/is on its way/)).toBeVisible();
     await expect(screen.getByText(/minutes for delivery/)).toBeVisible();
   });
@@ -120,6 +123,7 @@ test.describe('regression', () => {
 
 test.describe('cart and pricing', () => {
   test('adding multiple quantities updates the price correctly', async ({ screen }) => {
+    // @Scenario: #TS-100 Add menu item and adjust quantity in cart
     await navigateToMenu(screen);
 
     // Add 3x Quantum Shrimp Cascade at ₭38.00 each
@@ -219,6 +223,7 @@ test.describe('account', () => {
   });
 
   test('past orders total matches the displayed total spent (should fail)', async ({ screen }) => {
+    // @Scenario: #TS-103 Review previous orders in history list
     await openAccount(screen);
 
     const priceElements = screen.getByText(/₭\d+\.\d+/);
