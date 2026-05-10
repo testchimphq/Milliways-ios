@@ -1,0 +1,59 @@
+# SmartTests (mapped root: tc-tests) on iOS Simulator — no backend, local .app from Makefile.
+# Secrets: TESTCHIMP_API_KEY (required). If your project uses staging FeatureService, add a workflow
+# step or env that sets TESTCHIMP_BACKEND_URL (e.g. https://featureservice-staging.testchimp.io);
+# otherwise the reporter defaults to production and runs will not appear in the staging UI.
+name: SmartTests (iOS Simulator)
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: smarttests-ios-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smarttests:
+    runs-on: macos-latest
+    env:
+      TESTCHIMP_API_KEY: ${{ secrets.TESTCHIMP_API_KEY }}
+      TESTCHIMP_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+      TESTCHIMP_PROJECT_TYPE: ios
+      # GitHub-hosted macOS images vary; override Makefile default if builds fail on "device not found".
+      DEVICE_NAME: iPhone 16
+      IOS_APP_PATH: ${{ github.workspace }}/build/Build/Products/Debug-iphonesimulator/Milliways.app
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build Debug app for Simulator
+        working-directory: ${{ github.workspace }}
+        run: make build
+
+      - name: Boot Simulator (best-effort)
+        working-directory: ${{ github.workspace }}
+        run: make boot
+
+      - name: Wait for Simulator .app
+        run: test -d "$IOS_APP_PATH"
+
+      - name: Install tc-tests dependencies
+        working-directory: tc-tests
+        run: npm ci
+
+      - name: Run SmartTests smoke
+        working-directory: tc-tests
+        run: npm run test:smoke
+
+      - name: Upload Mobilewright HTML report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: mobilewright-report-tc-tests
+          path: tc-tests/mobilewright-report

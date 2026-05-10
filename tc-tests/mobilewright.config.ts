@@ -2,21 +2,16 @@ import { defineConfig, type MobilewrightConfig } from 'mobilewright';
 import dotenv from 'dotenv';
 
 /**
-SETUP INSTRUCTIONS FOR CI:
-1) run `npm install @testchimp/playwright` in your repo.
-2) Ensure TESTCHIMP_API_KEY is set in CI (from Project Settings → Key management). TESTCHIMP_PROJECT_ID is optional.
-3) Sync this 'tests' folder to a folder in your repo (Click "Sync with GitHub" - in SmartTests page in TestChimp).
-4) Setup your git workflow to run tests using standard playwright runner. Sample workflow file: https://github.com/testchimphq/CafeTime/blob/main/.github/workflows/playwright-tests.yml
-
-Note: the runner should be run from the tests folder to ensure proper path resolution (refer sample workflow file).
-Full Documentation: https://docs.testchimp.io/smart-tests/run-in-ci-playwright
-
-Keep @mobilewright/test and mobilewright on the SAME version in package.json. Mismatched versions cause
-"Playwright Test did not expect test() to be called here". Verify with: npm ls @mobilewright/test mobilewright
-If a dependency nests another playwright, use package.json "overrides" to force a single version.
-
-Global setup: project "setup" runs first (tests/setup/global.setup.spec.js), then "chromium" discovers *.spec.js / *.test.js (and .ts) anywhere under tests/ except setup/. See https://playwright.dev/docs/test-global-setup-teardown#option-1-project-dependencies
-**/
+ * SmartTests root: **tc-tests/** (see `.testchimp-tests`). Run Mobilewright from this directory.
+ *
+ * CI: `.github/workflows/smarttests-ios-simulator.yml` (macOS + Simulator + `npm run test:smoke`).
+ * Local: `../scripts/smarttests-ios-simulator.sh` or `make build && make boot` then `IOS_APP_PATH=... npm test` in `tc-tests`.
+ *
+ * Keep `mobilewright` and `@mobilewright/test` on the **same** version. If Playwright complains about
+ * duplicate `@playwright/test`, keep `package.json` **overrides** for `@playwright/test` / `playwright`.
+ *
+ * Docs: https://docs.testchimp.io/smart-tests/run-in-ci-playwright
+ */
 
 dotenv.config({
   path: `.env-${process.env.TESTCHIMP_ENV || 'QA'}`
@@ -48,8 +43,9 @@ const config: MobilewrightConfig = {
   // how many workers (devices) at the same time?
   workers: process.env.CI ? 2 : 1,
 
-  // install this app before starting
-  installApps: '[PATH_TO_IPA]',
+  // Local Simulator: set IOS_APP_PATH to your Debug-iphonesimulator .app (see Makefile in repo root).
+  // Cloud (mobile-use): set MOBILE_USE_API_KEY and use a device .ipa path here instead.
+  installApps: process.env.IOS_APP_PATH ?? '[PATH_TO_IPA]',
 
   reporter: [
     ['list'],
@@ -57,7 +53,12 @@ const config: MobilewrightConfig = {
     [
       '@testchimp/playwright/reporter',
       {
-        verbose: false,
+        // Config + specs live in `tc-tests/` (SmartTests root). Default env is `tests/` which breaks
+        // folderPath relative to the mapped repo folder — set `.` so reports match platform paths.
+        testsFolder: '.',
+        verbose: Boolean(process.env.TESTCHIMP_REPORTER_VERBOSE),
+        reportOnlyFinalAttempt: true,
+        captureScreenshots: true,
       },
     ],
   ],
@@ -74,7 +75,7 @@ const config: MobilewrightConfig = {
         testDir: '.',
         testIgnore: ['**/setup/**'],
         testMatch: '**/*.{spec,test}.{js,ts}',
-        use: { ...actionTimeout: 15 * 1000 },
+        use: { actionTimeout: 15 * 1000 },
       },
     ],
 };
