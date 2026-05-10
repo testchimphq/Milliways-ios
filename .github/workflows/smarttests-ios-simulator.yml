@@ -44,7 +44,8 @@ jobs:
       - name: Start Docker VM
         run: |
           colima start --cpu 2 --memory 4 --disk 20
-          docker context use colima || true
+          echo "DOCKER_HOST=unix://$HOME/.colima/default/docker.sock" >> "$GITHUB_ENV"
+          export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
           docker info
 
       - name: Start local backend

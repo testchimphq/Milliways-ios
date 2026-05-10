@@ -186,3 +186,7 @@ Review the exploration / journeys in the TestChimp UI using the batch id and bra
 ### Q: CI has `MOBILE_USE_API_KEY`, but SmartTests should run on the macOS Simulator.
 
 **A:** Do not pass **`MOBILE_USE_API_KEY`** into `.github/workflows/smarttests-ios-simulator.yml`. The Mobilewright config only selects Mobile Use when **`MOBILEWRIGHT_DRIVER=mobile-use`** is explicitly set, so a repository secret existing by itself is harmless. The simulator workflow should use **`IOS_APP_PATH`**, local Docker backend, and no Mobile Use driver.
+
+### Q: GitHub Actions Docker fails with `unix:///var/run/docker.sock ... no such file or directory`.
+
+**A:** The SmartTests workflow runs on **macOS** because iOS Simulator requires it. GitHub-hosted macOS runners do not have a Docker daemon at Linux's default **`/var/run/docker.sock`**. Start Colima first and persist **`DOCKER_HOST=unix://$HOME/.colima/default/docker.sock`** via **`$GITHUB_ENV`** before any later `docker compose` steps.
