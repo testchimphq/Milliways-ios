@@ -36,6 +36,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+## Cursor (local MCP / secrets)
+.cursor/mcp.json
+
 ## macOS
 .DS_Store
 **/.DS_Store
