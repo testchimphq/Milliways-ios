@@ -9,9 +9,14 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var orderManager = OrderManager()
+    @StateObject private var sessionManager = SessionManager()
 
     var body: some View {
-        WelcomeView(orderManager: orderManager)
+        if sessionManager.user == nil {
+            SignInView(sessionManager: sessionManager)
+        } else {
+            WelcomeView(orderManager: orderManager, sessionManager: sessionManager)
+        }
     }
 }
 

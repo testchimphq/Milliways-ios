@@ -1,5 +1,5 @@
 ---
-LastRunOnCommit: 4bc66d5426d1a2b568e2a0fd6b27f1fa886d69dc
+LastRunOnCommit: 06534fa1ca93bc1878e551f6a3136bba727d9cf6
 ---
 
 # Branch test plan — `main`
@@ -7,7 +7,7 @@ LastRunOnCommit: 4bc66d5426d1a2b568e2a0fd6b27f1fa886d69dc
 ## Analyze (summary)
 
 - **Plans:** `plans/stories/order-food.md` (**US-100**), `plans/stories/track-order.md` (**US-101**); scenarios **`plans/scenarios/add-menu-item.md` (#TS-100)** and **`plans/scenarios/submit-order-with-valid-delivery-details.md` (#TS-101)** (both under US-100). No scenario file yet for US-101.
-- **SmartTests root:** `tc-tests/` (iOS Mobilewright). **Environment:** `ai-test-instructions.md` — Simulator + `IOS_APP_PATH`, no backend.
+- **SmartTests root:** `tc-tests/` (iOS Mobilewright). **Environment:** `ai-test-instructions.md` — local Docker backend/Postgres, Simulator + `IOS_APP_PATH`.
 - **App reality:** Cart list does not expose per-line quantity steppers; quantity changes happen on **MenuItemDetailView** (`+` / `−` / `Add to Order`). Delivery is a **full-screen** success view (no separate “delivery form” fields).
 
 ## Plan — tests to author
@@ -21,8 +21,10 @@ LastRunOnCommit: 4bc66d5426d1a2b568e2a0fd6b27f1fa886d69dc
 
 #### Arrange
 
+- Local backend healthy at `MILLIWAYS_API_BASE_URL` / default `http://localhost:3001`.
+- `seededUser` fixture calls `POST /qa/users` and returns an email/password pair.
 - Simulator app installed (`IOS_APP_PATH`), fresh process: terminate + launch `bundleId`.
-- User on welcome; no cart state.
+- Test signs in through the native UI with the seeded user; no cart state.
 
 #### Act
 
@@ -40,7 +42,7 @@ LastRunOnCommit: 4bc66d5426d1a2b568e2a0fd6b27f1fa886d69dc
 
 #### Arrange
 
-- Same app boot as test 1; cart empty at start of test.
+- Same app boot and `seededUser` fixture posture as test 1; cart empty at start of test.
 
 #### Act
 
@@ -55,9 +57,9 @@ LastRunOnCommit: 4bc66d5426d1a2b568e2a0fd6b27f1fa886d69dc
 ## Phase completion (this run)
 
 - **Phase 1 Analyze:** done — plans read, SmartTests root confirmed.
-- **Phase 2 Plan:** done — table + AAA above; user requested authoring in same flow.
-- **Phase 3 Execute:** done — specs added under `tc-tests/`.
-- **Phase 4 Validate:** done — `npx mobilewright test order-flow.spec.js` from `tc-tests/` with `IOS_APP_PATH` + `TESTCHIMP_API_KEY` (3 passed, ~28s).
+- **Phase 2 Plan:** done — AAA updated for backend-seeded auth fixture.
+- **Phase 3 Execute:** done — `/qa/users` seed endpoint and `seededUser` fixture added; specs now sign in with seeded user.
+- **Phase 4 Validate:** done — backend smoke passed; `order-flow.spec.js` passed with `seededUser` fixture (3 passed, ~45s).
 - **Phase 5 ExploreChimp:** N/A — not opted in on branch plan.
 - **Phase 6 Cleanup:** N/A — no ephemeral env; app terminate covered in `afterEach` where applicable.
 
@@ -65,6 +67,8 @@ LastRunOnCommit: 4bc66d5426d1a2b568e2a0fd6b27f1fa886d69dc
 
 - [x] Branch plan file created / updated
 - [x] SmartTests for #TS-100 and #TS-101 authored in `tc-tests/`
-- [x] Local device-backed run for `order-flow.spec.js` (green)
-- [ ] CI / full `npm test` on PR when workflow expanded beyond smoke
+- [x] Auth seed endpoint and `seededUser` fixture added
+- [x] Local device-backed rerun for `order-flow.spec.js` after fixture update
+- [x] CI workflow expanded beyond smoke: starts local Docker backend, boots Simulator, installs app, and runs `order-flow.spec.js`
+- [ ] Confirm GitHub Actions run is green after push
 - [ ] (Optional) Add scenarios for **US-101** when defined in `plans/`

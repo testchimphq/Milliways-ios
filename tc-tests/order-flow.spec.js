@@ -5,6 +5,15 @@ async function navigateToMenu(screen) {
   await expect(screen.getByText('MAIN DISHES')).toBeVisible();
 }
 
+async function signInForDemo(screen, user) {
+  await expect(screen.getByText('Sign in to order from the restaurant at the end of the universe.')).toBeVisible();
+  await screen.getByLabel('Email').fill(user.email);
+  await screen.getByLabel('Password').fill(user.password);
+  await screen.getByText('Sign In').tap();
+  await screen.getByText('Not Now').tap({ timeout: 3000 }).catch(() => {});
+  await expect(screen.getByLabel('New Order')).toBeVisible();
+}
+
 /** Tap item row, optional extra `+` taps before Add (default quantity 1). */
 async function addItemToCart(screen, itemName, extraPlusTaps = 0) {
   await screen.getByText(itemName).scrollIntoViewIfNeeded();
@@ -15,9 +24,10 @@ async function addItemToCart(screen, itemName, extraPlusTaps = 0) {
   await screen.getByLabel('Add to Order').tap();
 }
 
-test.beforeEach(async ({ device, bundleId }) => {
+test.beforeEach(async ({ device, bundleId, screen, seededUser }) => {
   await device.terminateApp(bundleId).catch(() => {});
   await device.launchApp(bundleId);
+  await signInForDemo(screen, seededUser);
 });
 
 test.describe('US-100 order food', () => {

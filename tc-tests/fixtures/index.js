@@ -3,14 +3,12 @@
  * markScreenState fixture, ExploreChimp when enabled).
  *
  * Requires @testchimp/playwright >= 0.1.8 (installTestChimp).
- * Add domain fixtures with mergeTests, then wrap the merged test (use the same runner package as below:
- * `@playwright/test` for web, `@mobilewright/test` for Android/iOS):
- *   import { mergeTests } from '@playwright/test'; // or '@mobilewright/test'
+ * Add domain fixtures, then wrap the extended test (use `@mobilewright/test` for this iOS project):
  *   import { test as auth } from './auth.fixture.js';
- *   export const test = installTestChimp(mergeTests(auth));
+ *   export const test = installTestChimp(auth);
  */
-import { test as playwrightTest } from '@mobilewright/test';
 import { installTestChimp } from '@testchimp/playwright/runtime';
+import { test as auth } from './auth.fixture.js';
 
-export const test = installTestChimp(playwrightTest);
+export const test = installTestChimp(auth);
 export { expect } from '@mobilewright/test';

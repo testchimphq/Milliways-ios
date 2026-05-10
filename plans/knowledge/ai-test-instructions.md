@@ -1,6 +1,6 @@
 # TestChimp Init Progress
 
-**Init status:** Phase 1–3 executed for **native iOS SmartTests** in **`tc-tests/`**, **iOS Simulator only**, **no backend** (no `BASE_URL` / EaaS). User approved this plan in chat (2026-05-10).
+**Init status:** Phase 1–3 executed for **native iOS SmartTests** in **`tc-tests/`**, **iOS Simulator + local demo backend**. User approved the original init plan in chat (2026-05-10); backend support was added later for auth/menu/order persistence.
 
 ---
 
@@ -21,7 +21,7 @@
 | Key Area 2 — import / migration | **done** — **Greenfield** under `tc-tests/` for authored SmartTests (`smoke.quick.spec.js` + `setup/`). Legacy **`tests/`** tree and **`.github/workflows/run-tests.yml`** (Ubuntu + `MOBILE_USE_*`, `working-directory: tests`) are **out of TestChimp SmartTests mapping** until the team explicitly migrates or changes Git mappings. |
 | Key Area 3 — Mocking / AIMock | **done** — **HTTP `page.route`:** N/A (native Mobilewright, no browser `page` in this harness). **AIMock:** **not applicable** (no LLM-in-test scope for this repo’s SmartTests init). |
 | Key Area 4 — TrueCoverage | **done** — **N/A (native iOS)** per skill; see `plans/knowledge/truecoverage-instrument-progress.md`. |
-| Key Area 5 — environment | **done** — **Local iOS Simulator + Makefile** only; no backend compose or EaaS (user-confirmed). |
+| Key Area 5 — environment | **done** — **Local iOS Simulator + Makefile** plus local Docker Compose backend/Postgres; no EaaS. |
 | Key Area 6 — CI | **done** — New **`smarttests-ios-simulator.yml`** for `tc-tests`; legacy **`run-tests.yml`** unchanged. |
 
 ---
@@ -34,7 +34,7 @@
 | 2 | Existing suite / import | **skipped** | Greenfield in `tc-tests`; parallel **`tests/`** legacy documented only. |
 | 3 | Mocking | **done** | Mocking Plan below; no AIMock install. |
 | 4 | TrueCoverage | **skipped** | Native mobile N/A; progress file stubbed. |
-| 5 | Environment provision | **done** | Simulator + `make build` / `make boot`; `IOS_APP_PATH` contract below. |
+| 5 | Environment provision | **done** | Simulator + `make build` / `make boot`; local backend via `docker compose up --build -d`; `IOS_APP_PATH` and `MILLIWAYS_API_BASE_URL` contracts below. |
 | 6 | CI setup | **done** | `smarttests-ios-simulator.yml` — macOS, `make build`, `TESTCHIMP_*`, `npm run test:smoke` in `tc-tests`. |
 
 **PR packaging:** Prefer **separate PRs** for large slices (TrueCoverage, CI, migrations). This init bundles doc + workflow + script; split before merge if you want a smaller review.
@@ -60,7 +60,7 @@
 
 ## Environment Provision Strategy
 
-There is **no backend** to bring up for SmartTests today. **All** authoring and CI for this flow target the **iOS Simulator** and a **local Debug `.app`** built from the Xcode project.
+SmartTests target the **iOS Simulator**, a local Debug `.app`, and the local Milliways demo backend/Postgres stack.
 
 ### Local - Test Authoring
 
@@ -78,24 +78,28 @@ DEVICE_NAME="iPhone 16" ./scripts/smarttests-ios-simulator.sh
 
 **Manual steps (equivalent):**
 
-1. From repo root: **`make build`** — produces **`build/Build/Products/Debug-iphonesimulator/Milliways.app`** (see `Makefile`: `SCHEME`, `DEVICE_NAME`).
-2. **`make boot`** — boots the named Simulator and opens the Simulator app.
-3. **`export IOS_APP_PATH="$PWD/build/Build/Products/Debug-iphonesimulator/Milliways.app"`** (absolute path recommended).
-4. From **`tc-tests/`**: use **`npm test`** / **`npm run test:smoke`** (they set **`TESTCHIMP_PROJECT_TYPE=ios`** and inject API key + backend URL from **`.cursor/mcp.json`**). For ad-hoc **`npx mobilewright`**, export **`TESTCHIMP_PROJECT_TYPE=ios`** and TestChimp credentials yourself.
-5. **`npm ci`** / **`npm install`** then **`npm run test:smoke`** or **`npm test`**. Scripts use **`scripts/run-mobilewright-with-mcp-env.mjs`** to inject **`TESTCHIMP_API_KEY`** and **`TESTCHIMP_BACKEND_URL`** from **`.cursor/mcp.json`** (staging) into the Mobilewright process.
+1. From repo root: **`docker compose up --build -d`** — starts Postgres and the demo API. The API is exposed on **`http://localhost:3001`** by default.
+2. Wait until **`curl -fsS http://localhost:3001/health`** succeeds.
+3. From repo root: **`make build`** — produces **`build/Build/Products/Debug-iphonesimulator/Milliways.app`** (see `Makefile`: `SCHEME`, `DEVICE_NAME`).
+4. **`make boot`** — boots the named Simulator and opens the Simulator app.
+5. **`export IOS_APP_PATH="$PWD/build/Build/Products/Debug-iphonesimulator/Milliways.app"`** (absolute path recommended).
+6. Optional if overriding the default API: **`export MILLIWAYS_API_BASE_URL="http://localhost:3001"`**. The app and test fixtures default to this local URL.
+7. From **`tc-tests/`**: use **`npm test`** (or the repo wrapper script) to run the real order-flow SmartTests; **`npm run test:smoke`** is only a no-device harness check. The wrapper sets **`TESTCHIMP_PROJECT_TYPE=ios`** and injects TestChimp credentials from **`.cursor/mcp.json`**. For ad-hoc **`npx mobilewright`**, export **`TESTCHIMP_PROJECT_TYPE=ios`** and TestChimp credentials yourself.
+8. **`npm ci`** / **`npm install`** then **`npm run test:smoke`** or **`npm test`**. Scripts use **`scripts/run-mobilewright-with-mcp-env.mjs`** to inject **`TESTCHIMP_API_KEY`** and **`TESTCHIMP_BACKEND_URL`** from **`.cursor/mcp.json`** into the Mobilewright process.
 
 **Wait-for-healthy (agent contract):**
 
 - **App artifact:** directory **`$IOS_APP_PATH`** exists and is non-empty after **`make build`**.
+- **Backend:** **`curl -fsS http://localhost:3001/health`** returns success; fixture seed route **`POST /qa/users`** is available.
 - **Simulator:** `make boot` succeeds; optional check: `xcrun simctl list devices | grep -i Booted`.
 
-**No `BASE_URL`:** not used for this native-only SmartTests path unless a future web fixture appears.
+**No web `BASE_URL`:** not used for this native-only SmartTests path. Use **`MILLIWAYS_API_BASE_URL`** for the app backend when overriding the default local API.
 
 ### CI - Test Execution
 
-- **Primary:** `.github/workflows/smarttests-ios-simulator.yml` — **macOS**, **`make build`** / **`make boot`**, **`IOS_APP_PATH`** aligned with Makefile output, **`tc-tests`** + **`npm run test:smoke`**.
-- **Secrets:** **`TESTCHIMP_API_KEY`** (repository secret). Optional: tune **`DEVICE_NAME`** env in the workflow if the hosted image drops a given Simulator name.
-- **Legacy:** `.github/workflows/run-tests.yml` still targets **`tests/`** on Ubuntu with **`MOBILE_USE_API_KEY`** — separate from TestChimp-mapped **`tc-tests/`**.
+- **Primary:** `.github/workflows/smarttests-ios-simulator.yml` — **macOS**, Colima/Docker Compose backend (`docker compose up --build -d`), backend health wait on **`http://localhost:3001/health`**, **`make build`** / **`make boot`**, explicit simulator app install, **`tc-tests`** + **`npm test -- order-flow.spec.js`**.
+- **Secrets:** **`TESTCHIMP_API_KEY`** (repository secret). **`MOBILE_USE_API_KEY` is not used by this workflow** because CI runs on the local macOS Simulator. Optional: tune **`DEVICE_NAME`** env in the workflow if the hosted image drops a given Simulator name.
+- **Legacy:** `.github/workflows/run-tests.yml` targets **`tests/`** on Ubuntu with **`MOBILE_USE_API_KEY`**, but is **manual-only** (`workflow_dispatch`) so default PR/push CI uses the local Simulator workflow.
 
 ---
 
@@ -162,3 +166,23 @@ Review the exploration / journeys in the TestChimp UI using the batch id and bra
 ### Q: GitHub Actions `make build` fails — Simulator not found.
 
 **A:** Hosted images change available Simulator names. Set **`DEVICE_NAME`** in the workflow (or Makefile) to a device that exists on the runner (`xcrun simctl list devices available`).
+
+### Q: SmartTests need signed-in users after the demo backend was added.
+
+**A:** Use the `seededUser` fixture from **`tc-tests/fixtures/auth.fixture.js`**. It calls the local backend seed endpoint **`POST /qa/users`** at **`MILLIWAYS_API_BASE_URL`** (default **`http://localhost:3001`**) and returns `{ id, email, password }`; specs should sign in through the native UI with those credentials instead of creating accounts through the signup UI.
+
+### Q: Docker Compose API cannot bind port `3000` locally.
+
+**A:** A local Grafana process commonly owns `3000` on this workstation. The Milliways compose file exposes the API on host port **`3001`** while the container still listens on `3000`. Keep the app, fixture default, and smoke script aligned on **`http://localhost:3001`** unless explicitly overridden.
+
+### Q: `@mobilewright/test` does not export `mergeTests` in this project.
+
+**A:** The installed Mobilewright line (`@mobilewright/test@0.0.33`) exposes the base `test` but not Playwright's `mergeTests`. When there is only one domain fixture, export the extended fixture directly from `tc-tests/fixtures/index.js` via **`installTestChimp(auth)`**. Revisit composition only if additional domain fixtures are added.
+
+### Q: Mobilewright times out launching `com.mobilenext.Milliways` after rebuilding the `.app`.
+
+**A:** Mobilewright may treat the same `IOS_APP_PATH` as already installed even when the app contents changed. After `make build`, run **`make boot`** and, if launch timeouts persist, reinstall the current artifact explicitly: **`xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/Milliways.app`**, then rerun the spec.
+
+### Q: CI has `MOBILE_USE_API_KEY`, but SmartTests should run on the macOS Simulator.
+
+**A:** Do not pass **`MOBILE_USE_API_KEY`** into `.github/workflows/smarttests-ios-simulator.yml`. The Mobilewright config only selects Mobile Use when **`MOBILEWRIGHT_DRIVER=mobile-use`** is explicitly set, so a repository secret existing by itself is harmless. The simulator workflow should use **`IOS_APP_PATH`**, local Docker backend, and no Mobile Use driver.

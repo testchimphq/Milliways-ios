@@ -10,9 +10,10 @@ import type { Screen } from '@mobilewright/core';
 
 test.use({ video: 'on' });
 
-test.beforeEach(async ({ device, bundleId }) => {
+test.beforeEach(async ({ device, bundleId, screen }) => {
   await device.terminateApp(bundleId!).catch(() => {});
   await device.launchApp(bundleId!);
+  await signUpForDemo(screen);
 });
 
 test.afterEach(async ({ screen }, testInfo) => {
@@ -30,6 +31,15 @@ test.afterEach(async ({ screen }, testInfo) => {
 async function navigateToMenu(screen: Screen) {
   await screen.getByLabel('New Order').tap();
   await expect(screen.getByText('MAIN DISHES')).toBeVisible();
+}
+
+async function signUpForDemo(screen: Screen) {
+  const email = `test-${Date.now()}-${Math.random().toString(36).slice(2)}@milliways.local`;
+  await screen.getByText('Create an account').tap();
+  await screen.getByLabel('Signup Email').fill(email);
+  await screen.getByLabel('Signup Password').fill('password');
+  await screen.getByLabel('Sign Up').tap();
+  await expect(screen.getByText('Welcome to Milliways')).toBeVisible();
 }
 
 async function addItemToCart(screen: Screen, itemName: string, quantity = 1) {
@@ -217,8 +227,8 @@ test.describe('account', () => {
   test('profile shows user info, loyalty status, and stats', async ({ screen }) => {
     await openAccount(screen);
 
-    await expect(screen.getByText('Hi Glorpax!')).toBeVisible();
-    await expect(screen.getByText('Pro Cosmic Foodie 🌌')).toBeVisible();
+    await expect(screen.getByText(/@milliways.local/)).toBeVisible();
+    await expect(screen.getByText('Pro Cosmic Foodie')).toBeVisible();
     await expect(screen.getByText('My Account')).toBeVisible();
   });
 

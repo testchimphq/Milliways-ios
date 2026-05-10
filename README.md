@@ -23,8 +23,23 @@ This application contains intentionally placed bugs for testing purposes.
 ## Getting Started
 
 1. Clone the repository
-2. Open `Milliways.xcodeproj` in Xcode
-3. Build and run on iOS Simulator or real device
+2. Start the demo backend with Docker:
+   ```bash
+   docker compose up --build -d
+   ```
+3. Open `Milliways.xcodeproj` in Xcode
+4. Build and run on iOS Simulator or real device
+
+The local API is exposed at `http://localhost:3001` and the Postgres database is exposed at `localhost:5432`. The iOS Simulator can reach the API through `localhost`; a physical device needs the Mac's LAN IP instead.
+
+The backend is intentionally simple for demo and testing purposes. It stores email/password credentials directly in Postgres, seeds the menu on startup, persists orders, and exposes order status checks.
+
+Backend smoke test:
+
+```bash
+cd backend
+npm run smoke
+```
 
 ## Building with Make
 

@@ -1,7 +1,8 @@
-# SmartTests (mapped root: tc-tests) on iOS Simulator — no backend, local .app from Makefile.
+# SmartTests (mapped root: tc-tests) on iOS Simulator with local Docker backend.
 # Secrets: TESTCHIMP_API_KEY (required). If your project uses staging FeatureService, add a workflow
 # step or env that sets TESTCHIMP_BACKEND_URL (e.g. https://featureservice-staging.testchimp.io);
 # otherwise the reporter defaults to production and runs will not appear in the staging UI.
+# MOBILE_USE_API_KEY is intentionally not passed to this job; CI runs on the macOS Simulator.
 name: SmartTests (iOS Simulator)
 
 on:
@@ -21,6 +22,7 @@ jobs:
       TESTCHIMP_API_KEY: ${{ secrets.TESTCHIMP_API_KEY }}
       TESTCHIMP_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       TESTCHIMP_PROJECT_TYPE: ios
+      MILLIWAYS_API_BASE_URL: http://localhost:3001
       # GitHub-hosted macOS images vary; override Makefile default if builds fail on "device not found".
       DEVICE_NAME: iPhone 16
       IOS_APP_PATH: ${{ github.workspace }}/build/Build/Products/Debug-iphonesimulator/Milliways.app
@@ -31,6 +33,34 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+
+      - name: Install Docker tooling
+        run: |
+          brew install colima docker docker-compose
+          mkdir -p ~/.docker/cli-plugins
+          ln -sfn "$(brew --prefix)/opt/docker-compose/bin/docker-compose" ~/.docker/cli-plugins/docker-compose
+          docker compose version
+
+      - name: Start Docker VM
+        run: |
+          colima start --cpu 2 --memory 4 --disk 20
+          docker context use colima || true
+          docker info
+
+      - name: Start local backend
+        working-directory: ${{ github.workspace }}
+        run: docker compose up --build -d
+
+      - name: Wait for backend health
+        run: |
+          for i in {1..60}; do
+            if curl -fsS "$MILLIWAYS_API_BASE_URL/health"; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs --no-color
+          exit 1
 
       - name: Build Debug app for Simulator
         working-directory: ${{ github.workspace }}
@@ -43,13 +73,31 @@ jobs:
       - name: Wait for Simulator .app
         run: test -d "$IOS_APP_PATH"
 
+      - name: Install app on booted Simulator
+        working-directory: ${{ github.workspace }}
+        run: xcrun simctl install booted "$IOS_APP_PATH"
+
       - name: Install tc-tests dependencies
         working-directory: tc-tests
         run: npm ci
 
-      - name: Run SmartTests smoke
+      - name: Run SmartTests order flow
         working-directory: tc-tests
-        run: npm run test:smoke
+        run: npm test -- order-flow.spec.js
+
+      - name: Show backend logs on failure
+        if: failure()
+        working-directory: ${{ github.workspace }}
+        run: docker compose logs --no-color
+
+      - name: Stop local backend
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: docker compose down --volumes --remove-orphans
+
+      - name: Stop Docker VM
+        if: always()
+        run: colima stop || true
 
       - name: Upload Mobilewright HTML report
         if: always()

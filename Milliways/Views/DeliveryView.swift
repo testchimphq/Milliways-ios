@@ -8,15 +8,18 @@ import Combine
 
 struct DeliveryView: View {
     @State private var minutesRemaining: Double
+    @State private var statusText = "Checking status..."
     @Environment(\.dismiss) var dismiss
     @ObservedObject var orderManager: OrderManager
+    @ObservedObject var sessionManager: SessionManager
     var onClose: () -> Void
 
     let timer = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
-    init(orderManager: OrderManager, onClose: @escaping () -> Void) {
+    init(orderManager: OrderManager, sessionManager: SessionManager, onClose: @escaping () -> Void) {
         _minutesRemaining = State(initialValue: Double.random(in: 2_000_000...3_000_000))
         self.orderManager = orderManager
+        self.sessionManager = sessionManager
         self.onClose = onClose
     }
 
@@ -29,13 +32,20 @@ struct DeliveryView: View {
                 .ignoresSafeArea()
 
             VStack {
-                Text("Your \(orderManager.items[0].menuItem.name) is on its way!")
+                Text("Your \(orderManager.items.first?.menuItem.name ?? "order") is on its way!")
                     .font(.system(size: 22, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .shadow(radius: 4)
                     .padding(.horizontal)
                     .padding(.top, 120)
+
+                Text("Status: \(statusText.capitalized)")
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Color.black.opacity(0.45))
+                    .cornerRadius(8)
 
                 Spacer()
 
@@ -53,6 +63,9 @@ struct DeliveryView: View {
                 minutesRemaining -= Double.random(in: 0.01...0.05)
             }
         }
+        .task {
+            await refreshStatus()
+        }
         .overlay(alignment: .topTrailing) {
             Button(action: {
                 dismiss()
@@ -63,8 +76,21 @@ struct DeliveryView: View {
                     .foregroundColor(.white)
                     .shadow(radius: 2)
             }
+            .accessibilityLabel("Close")
             .padding(.trailing, 20)
             .padding(.top, 50)
+        }
+    }
+
+    @MainActor
+    private func refreshStatus() async {
+        guard let token = sessionManager.token else { return }
+
+        do {
+            try await orderManager.refreshSubmittedOrderStatus(token: token)
+            statusText = orderManager.latestOrderStatus?.status ?? "received"
+        } catch {
+            statusText = "unavailable"
         }
     }
 }

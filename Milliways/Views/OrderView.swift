@@ -9,11 +9,14 @@ import SwiftUI
 
 struct OrderView: View {
     @ObservedObject var orderManager: OrderManager
+    @ObservedObject var sessionManager: SessionManager
     @Binding var popToRoot: Bool
     @Environment(\.dismiss) var dismiss
     @State private var showDelivery = false
     @State private var couponCode = ""
     @State private var couponError: String? = nil
+    @State private var orderError: String? = nil
+    @State private var isSubmittingOrder = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,9 +32,7 @@ struct OrderView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemGroupedBackground))
 
-                Button(action: {
-                    showDelivery = true
-                }) {
+                Button(action: {}) {
                     Text("Place Order")
                         .font(.headline)
                         .foregroundColor(.white)
@@ -42,6 +43,7 @@ struct OrderView: View {
                 }
                 .padding()
                 .background(Color(.systemGroupedBackground))
+                .disabled(true)
             } else {
                 List {
                     ForEach(Array(orderManager.items.enumerated()), id: \.offset) { index, orderItem in
@@ -133,18 +135,35 @@ struct OrderView: View {
                     .background(Color(.systemGroupedBackground))
                 }
 
-                Button(action: {
-                    let cents = UInt(orderManager.finalTotal * 100)
-                    print("Processing payment of \(cents) cents")
-                    showDelivery = true
-                }) {
-                    Text("Place Order")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.green)
-                        .cornerRadius(12)
+                VStack(spacing: 8) {
+                    if let orderError {
+                        Text(orderError)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                    }
+
+                    Button(action: {
+                        Task {
+                            await placeOrder()
+                        }
+                    }) {
+                        if isSubmittingOrder {
+                            ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        } else {
+                            Text("Place Order")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        }
+                    }
+                    .background(Color.green)
+                    .cornerRadius(12)
+                    .disabled(isSubmittingOrder)
                 }
                 .padding()
                 .background(Color(.systemGroupedBackground))
@@ -157,9 +176,31 @@ struct OrderView: View {
         .fullScreenCover(isPresented: $showDelivery, onDismiss: {
             orderManager.clearOrder()
         }) {
-            DeliveryView(orderManager: orderManager) {
+            DeliveryView(orderManager: orderManager, sessionManager: sessionManager) {
                 popToRoot = false
             }
         }
+    }
+
+    @MainActor
+    private func placeOrder() async {
+        guard let token = sessionManager.token else {
+            orderError = "Please sign in first"
+            return
+        }
+
+        isSubmittingOrder = true
+        orderError = nil
+
+        do {
+            let cents = UInt(max(orderManager.finalTotal, 0) * 100)
+            print("Processing payment of \(cents) cents")
+            _ = try await orderManager.submitOrder(token: token)
+            showDelivery = true
+        } catch {
+            orderError = error.localizedDescription
+        }
+
+        isSubmittingOrder = false
     }
 }

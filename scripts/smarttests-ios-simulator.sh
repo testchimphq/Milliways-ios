@@ -1,12 +1,26 @@
 #!/usr/bin/env bash
-# Local SmartTests (tc-tests) on iOS Simulator — no backend.
-# Prerequisites: Xcode, CocoaPods (if the app needs them), Makefile `build` / `boot` targets.
+# Local SmartTests (tc-tests) on iOS Simulator with the local Docker backend.
+# Prerequisites: Xcode, Docker, Makefile `build` / `boot` targets.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 : "${DEVICE_NAME:=iPhone 17 Pro}"
+: "${MILLIWAYS_API_BASE_URL:=http://localhost:3001}"
 export DEVICE_NAME
+export MILLIWAYS_API_BASE_URL
+
+echo "==> Starting local backend"
+docker compose up --build -d
+
+echo "==> Waiting for backend at $MILLIWAYS_API_BASE_URL"
+for _ in {1..60}; do
+  if curl -fsS "$MILLIWAYS_API_BASE_URL/health" >/dev/null; then
+    break
+  fi
+  sleep 2
+done
+curl -fsS "$MILLIWAYS_API_BASE_URL/health" >/dev/null
 
 echo "==> Building Debug app for Simulator ($DEVICE_NAME)"
 make build
@@ -20,6 +34,9 @@ if [[ ! -d "$IOS_APP_PATH" ]]; then
   exit 1
 fi
 
-echo "==> Running SmartTests smoke from tc-tests (TestChimp env from .cursor/mcp.json when present)"
+echo "==> Installing app on booted Simulator"
+xcrun simctl install booted "$IOS_APP_PATH"
+
+echo "==> Running SmartTests order flow from tc-tests (TestChimp env from .cursor/mcp.json when present)"
 cd "$ROOT/tc-tests"
-node "$ROOT/scripts/run-mobilewright-with-mcp-env.mjs" smoke.quick.spec.js
+node "$ROOT/scripts/run-mobilewright-with-mcp-env.mjs" order-flow.spec.js

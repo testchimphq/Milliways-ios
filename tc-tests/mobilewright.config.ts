@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 /**
  * SmartTests root: **tc-tests/** (see `.testchimp-tests`). Run Mobilewright from this directory.
  *
- * CI: `.github/workflows/smarttests-ios-simulator.yml` (macOS + Simulator + `npm run test:smoke`).
+ * CI: `.github/workflows/smarttests-ios-simulator.yml` (macOS + local Docker backend + Simulator).
  * Local: `../scripts/smarttests-ios-simulator.sh` or `make build && make boot` then `IOS_APP_PATH=... npm test` in `tc-tests`.
  *
  * Keep `mobilewright` and `@mobilewright/test` on the **same** version. If Playwright complains about
@@ -17,9 +17,10 @@ dotenv.config({
   path: `.env-${process.env.TESTCHIMP_ENV || 'QA'}`
 });
 
-// Cloud (mobile-use) needs a device .ipa; local simulators need a Debug-iphonesimulator .app
-// (`make ipa` vs `make build` from the repo root — see Makefile).
-const useMobileUse = Boolean(process.env['MOBILE_USE_API_KEY']);
+// Cloud (mobile-use) needs a device .ipa; local simulators need a Debug-iphonesimulator .app.
+// Keep mobile-use opt-in so merely defining MOBILE_USE_API_KEY as a secret does not switch CI
+// away from the local iOS Simulator path.
+const useMobileUse = process.env.MOBILEWRIGHT_DRIVER === 'mobile-use' && Boolean(process.env['MOBILE_USE_API_KEY']);
 
 const config: MobilewrightConfig = {
   // tests are in the current directory
@@ -75,7 +76,6 @@ const config: MobilewrightConfig = {
         testDir: '.',
         testIgnore: ['**/setup/**'],
         testMatch: '**/*.{spec,test}.{js,ts}',
-        use: { actionTimeout: 15 * 1000 },
       },
     ],
 };

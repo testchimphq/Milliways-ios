@@ -1,8 +1,6 @@
-name: Run Mobilewright
+name: Run Mobilewright (legacy Mobile Use)
 
 on:
-  push:
-    branches: ["**"]
   workflow_dispatch:
 
 env:

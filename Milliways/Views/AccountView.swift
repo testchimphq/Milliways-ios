@@ -5,20 +5,16 @@
 
 import SwiftUI
 
-struct PastOrder: Identifiable {
-    let id = UUID()
-    let date: String
-    let total: Double
-}
-
 struct AccountView: View {
     @Environment(\.dismiss) var dismiss
+    @ObservedObject var sessionManager: SessionManager
+    @State private var orders: [BackendOrder] = []
+    @State private var isLoadingOrders = false
+    @State private var ordersError: String?
 
-    let pastOrders = [
-        PastOrder(date: "Feb 17, 2065", total: 78.50),
-        PastOrder(date: "Jun 3, 2065", total: 45.75),
-        PastOrder(date: "Oct 12, 2065", total: 112.00)
-    ]
+    var totalSpent: Double {
+        Double(orders.reduce(0) { $0 + $1.totalCents }) / 100
+    }
 
     var body: some View {
         NavigationView {
@@ -27,9 +23,9 @@ struct AccountView: View {
                 Section {
                     HStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Hi Glorpax!")
+                            Text(sessionManager.user?.email ?? "Signed in")
                                 .font(.system(size: 26, weight: .bold))
-                            Text("Pro Cosmic Foodie 🌌")
+                            Text("Pro Cosmic Foodie")
                                 .font(.subheadline)
                                 .foregroundColor(.orange)
                         }
@@ -50,7 +46,7 @@ struct AccountView: View {
                 Section {
                     HStack {
                         VStack {
-                            Text("3")
+                            Text("\(orders.count)")
                                 .font(.title)
                                 .fontWeight(.bold)
                             Text("Orders")
@@ -62,7 +58,7 @@ struct AccountView: View {
                         Divider()
 
                         VStack {
-                            Text("₭431.93")
+                            Text("₭\(totalSpent, specifier: "%.2f")")
                                 .font(.title)
                                 .fontWeight(.bold)
                             Text("Total Spent")
@@ -86,25 +82,41 @@ struct AccountView: View {
                     .padding(.vertical, 8)
                 }
 
-                // Past orders
                 Section(header: Text("Past Orders")) {
-                    ForEach(pastOrders) { order in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(order.date)
+                    if isLoadingOrders {
+                        ProgressView("Loading orders...")
+                    } else if let ordersError {
+                        Text(ordersError)
+                            .foregroundColor(.red)
+                    } else if orders.isEmpty {
+                        Text("No orders yet")
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(orders) { order in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Order #\(order.id)")
+                                        .font(.headline)
+                                    Text(order.status.capitalized)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Text("₭\(Double(order.totalCents) / 100, specifier: "%.2f")")
                                     .font(.headline)
-                                Text("Delivered across the galaxy")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.orange)
                             }
-
-                            Spacer()
-
-                            Text("₭\(order.total, specifier: "%.2f")")
-                                .font(.headline)
-                                .foregroundColor(.orange)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
+                    }
+                }
+
+                Section {
+                    Button("Sign Out", role: .destructive) {
+                        sessionManager.signOut()
+                        dismiss()
                     }
                 }
             }
@@ -118,6 +130,24 @@ struct AccountView: View {
                     }
                 }
             }
+            .task {
+                await loadOrders()
+            }
         }
+    }
+
+    @MainActor
+    private func loadOrders() async {
+        guard let token = sessionManager.token else { return }
+        isLoadingOrders = true
+        ordersError = nil
+
+        do {
+            orders = try await APIClient.shared.fetchOrders(token: token)
+        } catch {
+            ordersError = error.localizedDescription
+        }
+
+        isLoadingOrders = false
     }
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct WelcomeView: View {
     @ObservedObject var orderManager: OrderManager
+    @ObservedObject var sessionManager: SessionManager
     @State private var floatOffset: CGFloat = 0
     @State private var isMenuActive = false
     @State private var showAccount = false
@@ -46,7 +47,11 @@ struct WelcomeView: View {
                     Spacer()
 
                     NavigationLink(
-                        destination: MenuView(orderManager: orderManager, popToRoot: $isMenuActive)
+                        destination: MenuView(
+                            orderManager: orderManager,
+                            sessionManager: sessionManager,
+                            popToRoot: $isMenuActive
+                        )
                             .navigationBarBackButtonHidden(true)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
@@ -82,7 +87,7 @@ struct WelcomeView: View {
         }
         .navigationViewStyle(.stack)
         .sheet(isPresented: $showAccount) {
-            AccountView()
+            AccountView(sessionManager: sessionManager)
         }
     }
 }
