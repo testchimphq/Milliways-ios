@@ -61,7 +61,7 @@ android {
 }
 
 dependencies {
-    implementation("com.github.testchimphq:testchimp-rum-android:0.1.0")
+    implementation("com.github.testchimphq:testchimp-rum-android:0.1.2")
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
