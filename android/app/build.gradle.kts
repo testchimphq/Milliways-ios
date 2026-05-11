@@ -61,8 +61,8 @@ android {
 }
 
 dependencies {
-    // Bump to 0.1.3 after JitPack finishes building the tag (flush(wait=true) parity with iOS SDK).
-    implementation("com.github.testchimphq:testchimp-rum-android:0.1.2")
+    // Same bits as tag 0.1.3 (flush(wait=true)); JitPack serves full commit reliably while tag lookup lagged.
+    implementation("com.github.testchimphq:testchimp-rum-android:b363ce783956005f59cfabc18f328a8b737f0e49")
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
