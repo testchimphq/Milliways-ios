@@ -1,9 +1,7 @@
 import { test, expect } from './fixtures/index.js';
 import { navigateToMenu, signInForDemo, addItemToCart } from './helpers/order.js';
 
-test.beforeEach(async ({ device, bundleId, screen, seededUser }) => {
-  await device.terminateApp(bundleId).catch(() => {});
-  await device.launchApp(bundleId);
+test.beforeEach(async ({ screen, seededUser }) => {
   await signInForDemo(screen, expect, seededUser);
 });
 

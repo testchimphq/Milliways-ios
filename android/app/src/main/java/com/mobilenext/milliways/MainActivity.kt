@@ -1,6 +1,7 @@
 package com.mobilenext.milliways
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,7 +13,7 @@ import io.testchimp.rum.TestChimpRum
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        TestChimpRum.handleAutomationIntent(intent)
+        deliverTruecoverageAutomation(intent)
         enableEdgeToEdge()
         setContent {
             val vm: AppViewModel = viewModel()
@@ -23,6 +24,29 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        TestChimpRum.handleAutomationIntent(intent)
+        deliverTruecoverageAutomation(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        deliverTruecoverageAutomation(intent)
+    }
+
+    /**
+     * `adb shell am start -a VIEW -d …` sometimes leaves [Intent.getData] null while [Intent.getDataString] is set.
+     * TestChimpRum reads [Intent.getData] only; resolve both so TrueCoverage `ci_test_info` is not dropped.
+     */
+    private fun deliverTruecoverageAutomation(intent: Intent?) {
+        if (intent == null) return
+        val data = intent.data
+        val fromString =
+            intent.dataString
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { runCatching { Uri.parse(it) }.getOrNull() }
+        val uri = data ?: fromString
+        if (uri != null) {
+            TestChimpRum.handleAutomationUri(uri)
+        }
     }
 }

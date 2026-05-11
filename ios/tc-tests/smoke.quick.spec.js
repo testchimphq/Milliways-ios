@@ -1,10 +1,6 @@
 import { test, expect } from './fixtures/index.js';
 
-/**
- * Quick smoke (no .app / .ipa): avoids `screen`, `device`, and `markScreenState` so Mobilewright
- * does not run installApps. After you set `IOS_APP_PATH` in `.env-QA` (or the shell), add specs that
- * use `screen` / `markScreenState` for real UI flows.
- */
+/** Fast checks: env + project wiring (uses same merged `test` as full suite). */
 test.describe('quick smoke', () => {
   test('TestChimp mobile project type is ios', async () => {
     expect(process.env.TESTCHIMP_PROJECT_TYPE?.toLowerCase()).toBe('ios');

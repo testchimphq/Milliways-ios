@@ -1,9 +1,7 @@
 /**
- * Master Playwright test entry for SmartTests (TestChimp runtime: TrueCoverage CI metadata,
- * markScreenState fixture, ExploreChimp when enabled).
+ * SmartTests entry: merge domain fixtures, then wrap with TestChimp (`installTestChimp`).
+ * TrueCoverage / ExploreChimp / `markScreenState` — use `@testchimp/playwright` + `TESTCHIMP_PROJECT_TYPE=ios`.
  *
- * Requires @testchimp/playwright >= 0.1.8 (installTestChimp).
- * Add domain fixtures, then wrap the extended test (use `@mobilewright/test` for this iOS project):
  *   import { test as auth } from './auth.fixture.js';
  *   export const test = installTestChimp(auth);
  */
