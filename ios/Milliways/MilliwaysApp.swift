@@ -7,6 +7,7 @@
 
 import SwiftUI
 import TestChimpRum
+import UIKit
 
 @main
 struct MilliwaysApp: App {
@@ -19,6 +20,13 @@ struct MilliwaysApp: App {
             ContentView()
                 .onOpenURL { url in
                     _ = TestChimpRum.handleAutomationURL(url)
+                }
+                // RUM batches events; flush before suspend/relaunch so SmartTest runs still upload telemetry.
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
+                    TestChimpRum.flush()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+                    TestChimpRum.flush()
                 }
         }
     }
