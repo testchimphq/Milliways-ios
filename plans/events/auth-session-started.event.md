@@ -19,4 +19,5 @@ Instrumenting the auth boundary shows how often new sessions start via **sign in
 
 | Key | Values |
 |-----|--------|
+| `platform` | `ios`, `android`, or `web` — set automatically by each client’s `MilliwaysRum` (or web equivalent) on every emit. |
 | `entry.auth_kind` | `sign_in`, `sign_up` — bounded enum describing how the session was created. |

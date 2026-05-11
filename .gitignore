@@ -39,6 +39,11 @@ pnpm-debug.log*
 ## Cursor (local MCP / secrets)
 .cursor/mcp.json
 
+## Android
+android/local.properties
+android/.gradle/
+android/**/build/
+
 ## macOS
 .DS_Store
 **/.DS_Store

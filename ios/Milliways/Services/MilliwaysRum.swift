@@ -69,11 +69,11 @@ enum MilliwaysRum {
         return nil
     }
 
+    /// Merges caller `metadata` with `platform: "ios"` on every emit (web → `web`, Android → `android` in those clients).
     static func emit(_ title: String, metadata: [String: String] = [:]) {
-        let meta: [String: Any]? =
-            metadata.isEmpty
-            ? nil
-            : Dictionary(uniqueKeysWithValues: metadata.map { ($0.key, $0.value as Any) })
+        var merged = metadata
+        merged["platform"] = "ios"
+        let meta = Dictionary(uniqueKeysWithValues: merged.map { ($0.key, $0.value as Any) })
         TestChimpRum.emit(TestChimpEmitInput(title: title, metadata: meta))
     }
 

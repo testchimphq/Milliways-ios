@@ -20,7 +20,7 @@
 | Key Area 1 — markers / SmartTests root | **done** — `plans/.testchimp-plans`, `ios/tc-tests/.testchimp-tests` (`project_type=ios`). |
 | Key Area 2 — import / migration | **done** — **Greenfield** under `ios/tc-tests/` for authored SmartTests (`smoke.quick.spec.js` + `setup/`). Legacy **`ios/tests/`** tree and **`.github/workflows/run-tests.yml`** (Ubuntu + `MOBILE_USE_*`, `working-directory: ios/tests`) are **out of TestChimp SmartTests mapping** until the team explicitly migrates or changes Git mappings. |
 | Key Area 3 — Mocking / AIMock | **done** — **HTTP `page.route`:** N/A (native Mobilewright, no browser `page` in this harness). **AIMock:** **not applicable** (no LLM-in-test scope for this repo’s SmartTests init). |
-| Key Area 4 — TrueCoverage | **done** — **TestChimpRum** (iOS SPM) + `ios/Milliways-Info.plist` URL scheme + journey emits; see `plans/knowledge/truecoverage-instrument-progress.md` and `plans/events/`. |
+| Key Area 4 — TrueCoverage | **done** — **iOS:** TestChimpRum (SPM) + `ios/Milliways-Info.plist` + `MilliwaysRum`. **Android:** `testchimp-rum-android` (JitPack) + `MilliwaysRum` + `MainActivity` `testchimp-rum` intent + `BuildConfig` credentials. See `plans/knowledge/truecoverage-instrument-progress.md` and `plans/events/`. |
 | Key Area 5 — environment | **done** — **Local iOS Simulator + `ios/Makefile`** plus local Docker Compose backend/Postgres; no EaaS. |
 | Key Area 6 — CI | **done** — New **`smarttests-ios-simulator.yml`** for `ios/tc-tests`; legacy **`run-tests.yml`** unchanged. |
 
@@ -33,7 +33,7 @@
 | 1 | Basic TestChimp integration | **done** | Markers, `ios/tc-tests` harness, `@testchimp/playwright` reporter + `installTestChimp` in `ios/tc-tests/fixtures/index.js`, dev **`@testchimp/cli`**. |
 | 2 | Existing suite / import | **skipped** | Greenfield in `ios/tc-tests`; parallel **`ios/tests/`** legacy documented only. |
 | 3 | Mocking | **done** | Mocking Plan below; no AIMock install. |
-| 4 | TrueCoverage | **done** | `TestChimpRum` package, `testchimp-rum` URL scheme, `MilliwaysRum` helper, three journey events documented under `plans/events/`. |
+| 4 | TrueCoverage | **done** | **iOS:** SPM `TestChimpRum`, URL scheme, `MilliwaysRum`. **Android:** JitPack SDK, deep link + `handleAutomationIntent`, `MilliwaysRum`. Three journey events under `plans/events/`. |
 | 5 | Environment provision | **done** | Simulator + **`make -C ios build`** / **`make -C ios boot`**; local backend via `docker compose up --build -d`; `IOS_APP_PATH` and `MILLIWAYS_API_BASE_URL` contracts below. |
 | 6 | CI setup | **done** | `smarttests-ios-simulator.yml` — macOS, `cd ios && make build`, `TESTCHIMP_*`, `npm run test:smoke` in `ios/tc-tests`. |
 
@@ -105,7 +105,7 @@ DEVICE_NAME="iPhone 16" ./scripts/smarttests-ios-simulator.sh
 
 ## TrueCoverage Plan
 
-**Opted in (native iOS):** The app includes **TestChimpRum** ([testchimp-rum-ios](https://github.com/testchimphq/testchimp-rum-ios)) with TrueCoverage automation URLs (`testchimp-rum` scheme). SmartTest runs should continue to set **`TESTCHIMP_PROJECT_TYPE=ios`** and use **`installTestChimp`** in `ios/tc-tests/fixtures` so the reporter can deliver CI test identity to the native SDK via `device.openUrl`.
+**Opted in (native mobile):** **iOS** uses **TestChimpRum** ([testchimp-rum-ios](https://github.com/testchimphq/testchimp-rum-ios)) with the `testchimp-rum` URL scheme and `TestChimpRum.handleAutomationURL`. **Android** uses **[testchimp-rum-android](https://github.com/testchimphq/testchimp-rum-android)** with a `testchimp-rum` / `truecoverage` / `/v1` intent filter and `TestChimpRum.handleAutomationIntent` in `MainActivity`. SmartTest runs must set **`TESTCHIMP_PROJECT_TYPE`** to **`ios`** or **`android`** (matching the device under test) and use **`installTestChimp`** in **`ios/tc-tests/fixtures`** (or the Android SmartTests root when added) so the reporter can push CI context via `device.openUrl`.
 
 **Build-time credentials (do not commit real values):** On the **Milliways** target in **`ios/Milliways.xcodeproj`**, set user-defined **`TESTCHIMP_PROJECT_ID`** and **`TESTCHIMP_API_KEY`** (same project as TestChimp / SmartTests). These merge into **`ios/Milliways-Info.plist`** via `$(TESTCHIMP_PROJECT_ID)` / `$(TESTCHIMP_API_KEY)`. Empty values skip RUM initialization (see Debug console message from `MilliwaysRum`).
 

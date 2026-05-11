@@ -19,5 +19,6 @@ Menu load is the first heavy API step in the ordering funnel after auth. Trackin
 
 | Key | Values |
 |-----|--------|
+| `platform` | `ios`, `android`, or `web` — set automatically by each client’s `MilliwaysRum` (or web equivalent) on every emit. |
 | `menu.section_count_bucket` | `0`, `1`, `2_5`, `6_plus` — coarse bucket of number of menu sections returned. |
 | `cart.line_item_count_bucket` | `0`, `1`, `2_5`, `6_plus` — distinct line items in cart when menu finished loading. |

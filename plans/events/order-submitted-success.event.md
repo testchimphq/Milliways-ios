@@ -19,5 +19,6 @@ Order submission is the primary conversion event for this demo app. Emitting her
 
 | Key | Values |
 |-----|--------|
+| `platform` | `ios`, `android`, or `web` — set automatically by each client’s `MilliwaysRum` (or web equivalent) on every emit. |
 | `cart.line_item_count_bucket` | `0`, `1`, `2_5`, `6_plus` — distinct line items in the order at submission. |
 | `order.has_coupon` | `true`, `false` — whether a coupon was applied before submit. |

@@ -289,7 +289,7 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TESTCHIMP_API_KEY = "53a8588f-688b-446b-9925-35196e86f965";
 				TESTCHIMP_BACKEND_URL = "https://featureservice-staging.testchimp.io";
-				TESTCHIMP_ENV = QA;
+				TESTCHIMP_ENV = staging;
 				TESTCHIMP_PROJECT_ID = "f241349a-70f6-48ec-b213-e09ff8520386";
 			};
 			name = Debug;

@@ -44,9 +44,10 @@ const config: MobilewrightConfig = {
   // how many workers (devices) at the same time?
   workers: process.env.CI ? 2 : 1,
 
-  // Local Simulator: set IOS_APP_PATH to your Debug-iphonesimulator .app (see `ios/Makefile`).
-  // Cloud (mobile-use): set MOBILE_USE_API_KEY and use a device .ipa path here instead.
-  installApps: process.env.IOS_APP_PATH ?? '[PATH_TO_IPA]',
+  // Local Simulator: default matches `ios/Makefile` APP_PATH after `make build` (cwd is `ios/tc-tests`).
+  // Override IOS_APP_PATH for another tree, or use a device .ipa when MOBILEWRIGHT_DRIVER=mobile-use.
+  installApps:
+    process.env.IOS_APP_PATH ?? '../build/Build/Products/Debug-iphonesimulator/Milliways.app',
 
   reporter: [
     ['list'],

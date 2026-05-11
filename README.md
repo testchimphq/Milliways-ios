@@ -10,7 +10,7 @@ A demo restaurant stack inspired by The Restaurant at the End of the Universe: *
 |------|----------|
 | `backend/` | Node demo API and Docker image |
 | `ios/` | Xcode project, app sources, `Makefile`, legacy **`ios/tests/`** (Mobilewright / mobile-use), and **`ios/tc-tests/`** (TestChimp SmartTests / Mobilewright) |
-| `android/` | Android app (Kotlin) and **`android/tests/`** (reserved for future Mobilewright / SmartTests; empty for now) |
+| `android/` | **Kotlin + Compose** app (`:app`), same flows as iOS; **`android/tests/`** reserved for Mobilewright / SmartTests (placeholder only) |
 | `plans/` | Markdown test plans and event docs |
 | `scripts/` | Local CI helpers (e.g. iOS Simulator + SmartTests) |
 
@@ -64,6 +64,10 @@ make clean     # Clean build artifacts
 ```
 
 From repo root: `make -C ios build`, etc.
+
+## Android app
+
+See **`android/README.md`**. Open the `android/` folder in Android Studio, create `android/local.properties` with your SDK path, start the backend (`docker compose up` from repo root), then run on an emulator (API uses `10.0.2.2:3001` by default).
 
 ## Community
 
