@@ -78,6 +78,8 @@ class MainActivity : ComponentActivity() {
                     "TrueCoverage: CI context SET handled=$handled p_len=$pLen hasCiPeekAfterHandle=$hasCi",
                 )
             }
+            "/v1/flush" ->
+                Log.i(TAG, "TrueCoverage: RUM buffer FLUSH handled=$handled (events should upload before next clear)")
             else ->
                 Log.i(TAG, "TrueCoverage: automation uri path=$path handled=$handled")
         }
