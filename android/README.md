@@ -34,7 +34,7 @@ Sign in / sign up, welcome hero, menu with sections, item detail with quantity, 
 
 ## TrueCoverage (TestChimp RUM)
 
-The app includes **[testchimp-rum-android](https://github.com/testchimphq/testchimp-rum-android)** (JitPack `0.1.0`), aligned with iOS:
+The app includes **[testchimp-rum-android](https://github.com/testchimphq/testchimp-rum-android)** (JitPack `0.1.4`), aligned with iOS:
 
 - **Init:** `MilliwaysApplication` → `MilliwaysRum.configureIfNeeded` (same journey events: `auth_session_started`, `menu_loaded`, `order_submitted_success`). Every emit includes metadata **`platform`** = **`android`** (iOS uses **`ios`**; web should use **`web`**).
 - **Automation URLs:** `MainActivity` uses **`launchMode="singleTop"`**, a **`testchimp-rum`** / **`truecoverage`** / **`/v1`** intent filter, and **`TestChimpRum.handleAutomationIntent`** in **`onCreate`** / **`onNewIntent`** so Mobilewright + `installTestChimp` can set CI context (`TESTCHIMP_PROJECT_TYPE=android` on the runner).

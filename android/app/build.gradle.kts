@@ -61,8 +61,8 @@ android {
 }
 
 dependencies {
-    // Same bits as tag 0.1.3 (flush(wait=true)); JitPack serves full commit reliably while tag lookup lagged.
-    implementation("com.github.testchimphq:testchimp-rum-android:b363ce783956005f59cfabc18f328a8b737f0e49")
+    // JitPack tag 0.1.4: ci_test_info snapshot at emit() + emit-path hardening.
+    implementation("com.github.testchimphq:testchimp-rum-android:0.1.4")
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
