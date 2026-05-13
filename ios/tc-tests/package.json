@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@mobilewright/test": "^0.0.33",
-    "@testchimp/playwright": "0.1.40",
+    "@testchimp/playwright": "0.1.41",
     "dotenv": "^16.4.5",
-    "mobilewright": "^0.0.33"
+    "mobilewright": "^0.0.35"
   },
   "devDependencies": {
     "@testchimp/cli": "^0.1.4"
