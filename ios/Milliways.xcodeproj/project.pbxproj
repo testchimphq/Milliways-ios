@@ -287,10 +287,10 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TESTCHIMP_API_KEY = "53a8588f-688b-446b-9925-35196e86f965";
+				TESTCHIMP_API_KEY = "672341ca-f7e3-4606-a541-cda288aea88c";
 				TESTCHIMP_BACKEND_URL = "https://featureservice-staging.testchimp.io";
 				TESTCHIMP_ENV = staging;
-				TESTCHIMP_PROJECT_ID = "f241349a-70f6-48ec-b213-e09ff8520386";
+				TESTCHIMP_PROJECT_ID = "cafe8a35-4c15-4c41-913a-e6b0624e0bf8";
 			};
 			name = Debug;
 		};
@@ -326,10 +326,10 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TESTCHIMP_API_KEY = "53a8588f-688b-446b-9925-35196e86f965";
+				TESTCHIMP_API_KEY = "672341ca-f7e3-4606-a541-cda288aea88c";
 				TESTCHIMP_BACKEND_URL = "https://featureservice-staging.testchimp.io";
 				TESTCHIMP_ENV = production;
-				TESTCHIMP_PROJECT_ID = "f241349a-70f6-48ec-b213-e09ff8520386";
+				TESTCHIMP_PROJECT_ID = "cafe8a35-4c15-4c41-913a-e6b0624e0bf8";
 			};
 			name = Release;
 		};
@@ -361,8 +361,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/testchimphq/testchimp-rum-ios.git";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.3;
+				kind = revision;
+				revision = 5a51997d51e2b88f13089804a511a8a14f041070;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

@@ -1,7 +1,10 @@
 import Foundation
+import OSLog
 import TestChimpRum
 
 enum MilliwaysRum {
+    private static let rumLog = Logger(subsystem: "com.mobilenext.Milliways", category: "MilliwaysRUM")
+
     static func configureIfNeeded() {
         guard
             let projectId = Bundle.main.object(forInfoDictionaryKey: "TestChimpProjectId") as? String,
@@ -10,8 +13,8 @@ enum MilliwaysRum {
             !apiKey.isEmpty
         else {
             #if DEBUG
-            print(
-                "[Milliways] TestChimp RUM skipped: set user-defined build settings TESTCHIMP_PROJECT_ID and TESTCHIMP_API_KEY (injected into Info.plist)."
+            rumLog.warning(
+                "TestChimp RUM skipped: TestChimpProjectId / TestChimpApiKey missing or empty in Info.plist (set Xcode TESTCHIMP_PROJECT_ID and TESTCHIMP_API_KEY on the app target)."
             )
             #endif
             return
@@ -35,6 +38,14 @@ enum MilliwaysRum {
                 )
             )
         )
+        #if DEBUG
+        let apiHint = String(apiKey.count > 4 ? "…\(apiKey.suffix(4))" : "(len=\(apiKey.count))")
+        let endpointDesc = testchimpEndpoint ?? "(nil → SDK default ingress)"
+        let sid = TestChimpRum.getSessionId()
+        rumLog.info(
+            "TestChimp RUM initialized projectId=\(projectId, privacy: .public) apiKeyHint=\(apiHint, privacy: .public) environment=\(environment, privacy: .public) endpoint=\(endpointDesc, privacy: .public) session_id=\(sid, privacy: .public)"
+        )
+        #endif
     }
 
     /// Logical RUM environment for TrueCoverage (must match tags you filter on in TestChimp, e.g. `production`, `staging`, `QA`).
@@ -74,6 +85,14 @@ enum MilliwaysRum {
         var merged = metadata
         merged["platform"] = "ios"
         let meta = Dictionary(uniqueKeysWithValues: merged.map { ($0.key, $0.value as Any) })
+        #if DEBUG
+        MilliwaysRumDiagnostics.recordEmit(title: title)
+        let d = MilliwaysRumDiagnostics.snapshotForLog()
+        let metaKeys = merged.keys.sorted().joined(separator: ",")
+        rumLog.info(
+            "RUM emit title=\(title, privacy: .public) metaKeys=[\(metaKeys, privacy: .public)] trueCoverageState=\(d.automation, privacy: .public) emitCallCount=\(d.emitCount, privacy: .public) (ci_test_info on wire only if state shows set_ok before emit; filter Console: MilliwaysTC + MilliwaysRUM)"
+        )
+        #endif
         TestChimpRum.emit(TestChimpEmitInput(title: title, metadata: meta))
     }
 
