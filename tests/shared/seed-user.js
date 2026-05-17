@@ -1,12 +1,8 @@
-import { test as base } from '@mobilewright/test';
-
 const apiBaseUrl = process.env.MILLIWAYS_API_BASE_URL ?? 'http://localhost:3001';
 
-async function seedUser(testInfo) {
-  const suffix = `${testInfo.workerIndex}-${testInfo.parallelIndex}-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
-  const email = `tc-${suffix}@milliways.local`;
+export async function seedUser(testInfo) {
+  const suffix = `${testInfo.workerIndex}${Date.now()}`;
+  const email = `tc${suffix}@test.com`;
   const password = 'password';
 
   const response = await fetch(`${apiBaseUrl}/qa/users`, {
@@ -29,11 +25,3 @@ async function seedUser(testInfo) {
     password,
   };
 }
-
-// Establishes a backend user account that specs can sign in with through the native UI.
-export const test = base.extend({
-  seededUser: async ({}, use, testInfo) => {
-    const user = await seedUser(testInfo);
-    await use(user);
-  },
-});

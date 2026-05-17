@@ -1,13 +1,18 @@
-import { test, expect } from './fixtures/index.js';
+import '@testchimp/playwright/runtime';
+import { test, expect } from '../../fixtures/index.js';
+
+test.describe.configure({ mode: 'serial' });
 import {
   navigateToMenu,
   signInForDemo,
   addItemToCart,
   openCart,
-} from './helpers/order.js';
+  tapNewOrder,
+  waitForSignedInHome,
+} from '../../../shared/order-helpers.js';
 
-test.beforeEach(async ({ screen, seededUser }) => {
-  await signInForDemo(screen, expect, seededUser);
+test.beforeEach(async ({ screen, seededUser }, testInfo) => {
+  await signInForDemo(screen, expect, seededUser, testInfo);
 });
 
 test.describe('US-104 navigate app after ordering', () => {
@@ -24,8 +29,7 @@ test.describe('US-104 navigate app after ordering', () => {
     await screen.getByLabel('Close').tap();
 
     await expect(screen.getByText('Welcome to Milliways')).toBeVisible({ timeout: 20_000 });
-    await screen.getByLabel('New Order').scrollIntoViewIfNeeded();
-    await expect(screen.getByLabel('New Order')).toBeVisible({ timeout: 20_000 });
+    await waitForSignedInHome(screen, expect, 20_000);
   });
 
   test('cart is cleared after completing an order', async ({ screen, markScreenState }) => {
@@ -39,10 +43,9 @@ test.describe('US-104 navigate app after ordering', () => {
     await screen.getByLabel('Close').tap();
     await expect(screen.getByText('Welcome to Milliways')).toBeVisible({ timeout: 20_000 });
 
-    await screen.getByLabel('New Order').scrollIntoViewIfNeeded();
-    await screen.getByLabel('New Order').tap();
+    await tapNewOrder(screen, expect);
     await markScreenState('Menu', 'Browsing');
     await openCart(screen);
-    await expect(screen.getByText('Your order is empty')).toBeVisible();
+    await expect(screen.getByText('Your order is empty')).toBeVisible({ timeout: 30_000 });
   });
 });

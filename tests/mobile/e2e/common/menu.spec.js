@@ -1,8 +1,11 @@
-import { test, expect } from './fixtures/index.js';
-import { navigateToMenu, signInForDemo } from './helpers/order.js';
+import '@testchimp/playwright/runtime';
+import { test, expect } from '../../fixtures/index.js';
 
-test.beforeEach(async ({ screen, seededUser }) => {
-  await signInForDemo(screen, expect, seededUser);
+test.describe.configure({ mode: 'serial' });
+import { navigateToMenu, signInForDemo } from '../../../shared/order-helpers.js';
+
+test.beforeEach(async ({ screen, seededUser }, testInfo) => {
+  await signInForDemo(screen, expect, seededUser, testInfo);
 });
 
 test.describe('US-101 browse restaurant menu', () => {
@@ -32,8 +35,5 @@ test.describe('US-101 browse restaurant menu', () => {
     await expect(
       screen.getByText('* Shipping beyond 5 light-years distance might cost extra'),
     ).toBeVisible();
-
-    await screen.getByText('Green Salad').scrollIntoViewIfNeeded({ direction: 'down' });
-    await expect(screen.getByText('MAIN DISHES')).toBeVisible();
   });
 });

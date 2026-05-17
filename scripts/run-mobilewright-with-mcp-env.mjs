@@ -3,7 +3,7 @@
  * Run Mobilewright from a SmartTests root with TestChimp env from a chosen MCP JSON
  * (`mcpServers.testchimp.env`: TESTCHIMP_API_KEY, optional TESTCHIMP_BACKEND_URL).
  *
- * Defaults (backward compatible): ios/.cursor/mcp.json + ios/tc-tests + TESTCHIMP_PROJECT_TYPE=ios.
+ * Defaults: repo `.cursor/mcp.json` + `tests/` SmartTests root.
  *
  * Usage:
  *   node scripts/run-mobilewright-with-mcp-env.mjs [args...]   # legacy: args → mobilewright
@@ -18,9 +18,9 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
 
-let mcpPath = join(repoRoot, 'ios', '.cursor', 'mcp.json');
-let testsRoot = join(repoRoot, 'ios', 'tc-tests');
-let projectType = 'ios';
+let mcpPath = join(repoRoot, '.cursor', 'mcp.json');
+let testsRoot = join(repoRoot, 'tests');
+let projectType = 'mobile';
 let explicitMcpJson = false;
 
 const raw = process.argv.slice(2);
@@ -61,6 +61,12 @@ function applyTestchimpEnvFromMcp(mcpJson) {
   }
 }
 
+/**
+ * SmartTests root is `tests/` (mapped in TestChimp). Paths are relative to that folder, not repo root.
+ * Matches legacy ios/tc-tests reporter config (`testsFolder: '.'`).
+ */
+env.TESTCHIMP_TESTS_FOLDER = env.TESTCHIMP_TESTS_FOLDER || '.';
+
 if (explicitMcpJson) {
   if (!existsSync(mcpPath)) {
     console.error(`[run-mobilewright-with-mcp-env] --mcp-json: file not found: ${mcpPath}`);
@@ -89,8 +95,24 @@ if (explicitMcpJson) {
     console.warn('[run-mobilewright-with-mcp-env] Could not parse MCP JSON; using process env only.');
   }
 } else {
-  console.warn(`[run-mobilewright-with-mcp-env] No MCP file at ${mcpPath}; using process env only.`);
+  console.error(`[run-mobilewright-with-mcp-env] Missing MCP config at ${mcpPath}`);
+  console.error('Create .cursor/mcp.json with mcpServers.testchimp.env (TESTCHIMP_API_KEY, TESTCHIMP_BACKEND_URL).');
+  process.exit(1);
 }
+
+if (!env.TESTCHIMP_API_KEY?.trim()) {
+  console.error('[run-mobilewright-with-mcp-env] TESTCHIMP_API_KEY is missing (set in .cursor/mcp.json).');
+  process.exit(1);
+}
+if (!env.TESTCHIMP_BACKEND_URL?.trim()) {
+  console.error('[run-mobilewright-with-mcp-env] TESTCHIMP_BACKEND_URL is missing (set in .cursor/mcp.json).');
+  process.exit(1);
+}
+
+console.log(
+  `[run-mobilewright-with-mcp-env] Reporter env: TESTCHIMP_BACKEND_URL=${env.TESTCHIMP_BACKEND_URL} ` +
+    `TESTCHIMP_API_KEY=set testsFolder=${env.TESTCHIMP_TESTS_FOLDER}`
+);
 
 env.TESTCHIMP_PROJECT_TYPE = env.TESTCHIMP_PROJECT_TYPE || projectType;
 env.TESTCHIMP_MOBILE_TEST_MODULE = '@mobilewright/test';

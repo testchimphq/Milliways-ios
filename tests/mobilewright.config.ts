@@ -1,5 +1,16 @@
 import { defineConfig, type MobilewrightConfig } from 'mobilewright';
 import dotenv from 'dotenv';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const testsRoot = dirname(fileURLToPath(import.meta.url));
+const repoRoot = join(testsRoot, '..');
+const defaultIosApp =
+  process.env.IOS_APP_PATH ??
+  join(repoRoot, 'ios/build/Build/Products/Debug-iphonesimulator/Milliways.app');
+const defaultApk =
+  process.env.ANDROID_APK_PATH ??
+  join(repoRoot, 'android/app/build/outputs/apk/debug/app-debug.apk');
 
 /**
  * Mobile scaffold: setup + api + ios + android projects (mobilewright >= 0.0.37).
@@ -18,23 +29,27 @@ const config: MobilewrightConfig = {
   testDir: '.',
   retries: 0,
   timeout: 120_000,
-  bundleId: 'com.mobilenext.milliways',
-  fullyParallel: true,
-  workers: process.env.CI ? 2 : 1,
+  bundleId: 'com.mobilenext.Milliways',
+  fullyParallel: false,
+  workers: 1,
   reporter: [
     ['list'],
     ['html', { outputFolder: 'mobilewright-report' }],
-    ['@testchimp/playwright/reporter', { verbose: false }],
+    [
+      '@testchimp/playwright/reporter',
+      {
+        // Ingest auth + URL: TESTCHIMP_API_KEY and TESTCHIMP_BACKEND_URL on the runner env only.
+        // testsFolder: relative to this config dir (SmartTests root); platform resolves via API key.
+        testsFolder: process.env.TESTCHIMP_TESTS_FOLDER || '.',
+        verbose: process.env.TESTCHIMP_REPORTER_VERBOSE === 'true',
+        reportOnlyFinalAttempt: true,
+        captureScreenshots: true,
+      },
+    ],
   ],
   projects: [
     {
-      name: 'setup',
-      testDir: 'setup',
-      testMatch: /global\.setup\.spec\.(js|ts)$/,
-    },
-    {
       name: 'api',
-      dependencies: ['setup'],
       testDir: 'api',
       testMatch: '**/*.spec.{js,ts}',
       testIgnore: ['**/fixtures/**'],
@@ -42,29 +57,27 @@ const config: MobilewrightConfig = {
     // @testchimp-scaffold:ios-project
     {
       name: 'ios',
-      dependencies: ['setup'],
       testDir: 'mobile',
       testMatch: ['e2e/common/**/*.spec.{js,ts}', 'e2e/ios/**/*.spec.{js,ts}'],
       testIgnore: ['**/fixtures/**', '**/pages/**', '**/shared/**', 'web/**'],
       use: {
         platform: 'ios',
-        bundleId: 'com.mobilenext.milliways',
-        installApps: '[PATH_TO_IOS_APP]',
-        actionTimeout: 15 * 1000,
+        bundleId: 'com.mobilenext.Milliways',
+        installApps: defaultIosApp,
+        actionTimeout: 30 * 1000,
       },
     },
     // @testchimp-scaffold:/ios-project
     // @testchimp-scaffold:android-project
     {
       name: 'android',
-      dependencies: ['setup'],
       testDir: 'mobile',
       testMatch: ['e2e/common/**/*.spec.{js,ts}', 'e2e/android/**/*.spec.{js,ts}'],
       testIgnore: ['**/fixtures/**', '**/pages/**', '**/shared/**', 'web/**'],
       use: {
         platform: 'android',
         bundleId: 'com.mobilenext.milliways',
-        installApps: '[PATH_TO_APK]',
+        installApps: defaultApk,
         actionTimeout: 15 * 1000,
       },
     },

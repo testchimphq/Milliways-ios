@@ -67,6 +67,7 @@ struct WelcomeView: View {
                             .padding()
                             .background(Color.orange)
                             .clipShape(Capsule())
+                            .accessibilityLabel("New Order")
                     }
                     .padding(.horizontal, 60)
                     .padding(.bottom)
@@ -82,6 +83,7 @@ struct WelcomeView: View {
                             .font(.system(size: 22))
                             .foregroundColor(.white)
                     }
+                    .accessibilityLabel("Account")
                 }
             }
         }
