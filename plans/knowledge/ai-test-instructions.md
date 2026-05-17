@@ -67,6 +67,7 @@ Deferred. When enabled, use macOS for iOS Simulator + `tests/` as cwd; pass `TES
 - **Enabled** for staging unified project `0853e684-9871-483a-bc71-ca84d922be7c`.
 - **Instrumented events (current slice only):** `auth-session-started`, `menu-loaded`, `order-submitted-success` — see `plans/events/`.
 - RUM `environment` aligns with `TESTCHIMP_ENV` / build config (`staging` or `QA` for local Debug).
+- Mobile SmartTests: `installTestChimp(..., { uiFixture: 'screen' })` in `tests/mobile/fixtures/index.js` and `projects[].use.platform` (`ios` / `android`) in `tests/mobilewright.config.ts`. `@testchimp/playwright` ≥ **0.2.3** applies one TrueCoverage `v1/set` from the **`device`** fixture (after `launchApp`, before `screen`). Platform for `afterEach` flush comes from `projects[].use.platform`, not `TESTCHIMP_PROJECT_TYPE`.
 
 ## Mocking Plan
 
@@ -87,6 +88,10 @@ Deferred. When enabled, use macOS for iOS Simulator + `tests/` as cwd; pass `TES
 ### Q: Tests cannot find the app bundle or APK
 
 **A:** Build iOS (`make build`) or Android (`./gradlew :app:assembleDebug`), or set `IOS_APP_PATH` / `ANDROID_APK_PATH`. **mobilewright 0.0.37+** (iOS simulator): `installApps` must be a **`.zip`** of the `.app` (see `run-smarttests.sh` — it zips after build). Android still uses `.apk`.
+
+### Q: RUM events missing `ci_test_info` on mobile
+
+**A:** Use `@testchimp/playwright` ≥ **0.2.3**, `installTestChimp` with `uiFixture: 'screen'`, and `use.platform: 'ios'` or `'android'` on the Mobilewright UI project. Run with `--project=ios` or `--project=android`. Expect `device.openUrl` to `testchimp-rum://truecoverage/v1/set?p=...` once per test at device fixture start (plus trailing set+flush in `afterEach`). Avoid **0.2.0–0.2.2** on mobile (device SET could be skipped). Import `test` from `mobile/fixtures/index.js`, not only `@testchimp/playwright/runtime`.
 
 ### Q: Seed user fails
 

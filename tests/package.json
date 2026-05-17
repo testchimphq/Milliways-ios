@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@mobilewright/test": "^0.0.37",
-    "@testchimp/playwright": "0.2.0",
+    "@testchimp/playwright": "^0.2.1",
     "dotenv": "^16.4.5",
     "mobilewright": "^0.0.37"
   },
