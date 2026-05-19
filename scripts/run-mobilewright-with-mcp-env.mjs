@@ -104,13 +104,12 @@ if (!env.TESTCHIMP_API_KEY?.trim()) {
   console.error('[run-mobilewright-with-mcp-env] TESTCHIMP_API_KEY is missing (set in .cursor/mcp.json).');
   process.exit(1);
 }
-if (!env.TESTCHIMP_BACKEND_URL?.trim()) {
-  console.error('[run-mobilewright-with-mcp-env] TESTCHIMP_BACKEND_URL is missing (set in .cursor/mcp.json).');
-  process.exit(1);
-}
+const backendLabel = env.TESTCHIMP_BACKEND_URL?.trim()
+  ? env.TESTCHIMP_BACKEND_URL.trim()
+  : '(default production)';
 
 console.log(
-  `[run-mobilewright-with-mcp-env] Reporter env: TESTCHIMP_BACKEND_URL=${env.TESTCHIMP_BACKEND_URL} ` +
+  `[run-mobilewright-with-mcp-env] Reporter env: TESTCHIMP_BACKEND_URL=${backendLabel} ` +
     `TESTCHIMP_API_KEY=set testsFolder=${env.TESTCHIMP_TESTS_FOLDER}`
 );
 
